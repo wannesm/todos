@@ -23,12 +23,32 @@
 <body>
   <h1>Todos</h1>
   <script type="text/html">
-    {{view SC.TextField id="new-todo" placeholder="What needs to be done?"}}
+  {{view Todos.CreateTodoView id="new-todo" placeholder="What needs to be done?"}}
+
+  <!-- Insert this after the CreateTodoView and before the collection. -->
+  {{#view Todos.StatsView id="stats"}}
+    {{#view SC.Button classBinding="isActive"
+      target="Todos.todosController"
+      action="clearCompletedTodos"}}
+      Clear Completed Todos
+    {{/view}}
+    {{remainingString}} remaining
+  {{/view}}
+
+  {{view SC.Checkbox class="mark-all-done"
+    title="Mark All as Done"
+    valueBinding="Todos.todosController.allAreDone"}}
+
+  {{#collection contentBinding="Todos.todosController" tagName="ul" itemClassBinding="content.isDone"}}
+    {{view SC.Checkbox titleBinding="parentView.content.title"
+        valueBinding="parentView.content.isDone"}}
+  {{/collection}}
   </script>
+
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
   <script>!window.jQuery && document.write(unescape('%3Cscript src="js/libs/jquery-1.6.1.min.js"%3E%3C/script%3E'))</script>
-  <script src="js/libs/sproutcore-2.0.a.1.min.js"></script>
+  <script src="js/libs/sproutcore-2.0.a.2.min.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
