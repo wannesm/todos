@@ -22,13 +22,13 @@ Todos.todosController = SC.ArrayProxy.create({
   }.property('@each.isDone'),
 
   allAreDone: function(key, value) {
-    if (value !== undefined) {
-      this.setEach('isDone', value);
- 
-      return value;
-    } else {
-      return this.get('length') && this.everyProperty('isDone', true);
-    }
+    if (value !== undefined) {
+      this.setEach('isDone', value);
+
+      return value;
+    } else {
+      return this.get('length') && this.everyProperty('isDone', true);
+    }
   }.property('@each.isDone')
 });
 
