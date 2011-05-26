@@ -166,7 +166,7 @@ body {
       border: 1px solid #828282;
       color: #000;
       float: right;
-      padding: 0 5px; }
+      padding: 5px; }
       body #stats .sc-button:hover {
         background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(1%, #ffffff), color-stop(34%, #e2e2e2), color-stop(67%, #f7f7f7), color-stop(100%, #fcfcfc));
         background-image: -webkit-linear-gradient(#ffffff 1%, #e2e2e2, #f7f7f7, #fcfcfc);
