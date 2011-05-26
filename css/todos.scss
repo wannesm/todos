@@ -79,7 +79,7 @@ body {
       border: 1px solid #828282;
       color: #000;
       float: right;
-      padding: 0 5px;
+      padding: 5px;
 
       &:hover {
         @include background-image(linear-gradient(#FFF 1%, #E2E2E2, #F7F7F7, #FCFCFC));
