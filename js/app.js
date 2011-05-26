@@ -27,7 +27,7 @@ Todos.todosController = SC.ArrayProxy.create({
 
       return value;
     } else {
-      return this.get('length') && this.everyProperty('isDone', true);
+      return !!this.get('length') && this.everyProperty('isDone', true);
     }
   }.property('@each.isDone')
 });
