@@ -74,6 +74,7 @@ Todos.Todo = SC.Object.extend({
         console.error(status, error, response.responseText);
       },
       complete: function(){
+        self.set('isSaving', false);
         if (self.get('hasQueuedDestroy')) { self.destroy(); }
         else if (self.get('hasQueuedSave')) { self.save(); }
       }
@@ -103,6 +104,9 @@ Todos.Todo = SC.Object.extend({
       },
       success: function(){
         self.set('isDestroyed', true);
+      },
+      complete: function(){
+        self.set('isDestroying', false);
       }
     });
   },
