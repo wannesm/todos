@@ -1,6 +1,10 @@
 Todos = SC.Application.create({
   ready: function(){
     this._super();
+    this.fetchTodos();
+  },
+
+  fetchTodos: function(){
     $.ajax('/todos.json', {
       success: function(data){
         Todos.todosController.beginPropertyChanges();
