@@ -1,5 +1,6 @@
-This application shows how you can write SproutCore 2.0 apps with an astonishingly small amount of code.
+
+Extension of the SproutCore 2.0 Todos sample application to be used in the 2011-2012 Machine Learning course at K.U.Leuven.
+
+Derived from code by Yehuda Katz and Tom Dale.
 
 For more information about SproutCore, visit http://www.sproutcore.com.
-
-By Yehuda Katz and Tom Dale
