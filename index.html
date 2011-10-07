@@ -25,7 +25,9 @@
   <script type="text/x-handlebars">
   {{view Todos.CreateTodoView id="new-todo" placeholder="What needs to be done?"}}
 
-  <!-- Insert this after the CreateTodoView and before the collection. -->
+  <!-- SUGGESTION: Here you could put a new #collection with a binding to
+       your newly created controller: Todos.tagsController -->
+
   {{#view Todos.StatsView id="stats"}}
     {{#view SC.Button classBinding="isActive"
       target="Todos.todosController"

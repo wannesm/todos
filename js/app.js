@@ -1,5 +1,6 @@
 Todos = SC.Application.create();
 
+// SUGGESTION: Your tags can be stored in a similar way as how todos are stored
 Todos.Todo = SC.Object.extend({
   title: null,
   isDone: false
@@ -41,6 +42,7 @@ Todos.StatsView = SC.View.extend({
   }.property('remaining')
 });
 
+// SUGGESTION: Think about using SC.TextArea to get a bigger input field
 Todos.CreateTodoView = SC.TextField.extend({
   insertNewline: function() {
     var value = this.get('value');
