@@ -1,7 +1,9 @@
 
 Extension of the SproutCore 2.0 Todos sample application to be used in the 2011-2012 Machine Learning course at K.U.Leuven.
 
-Machine Learning and Inductive Inference: http://onderwijsaanbod.kuleuven.be/syllabi/e/H02C1BE.htm
+Machine Learning and Inductive Inference: http://onderwijsaanbod.kuleuven.be/syllabi/e/H02C1BE.htm .
+
+The source code is available at http://wannesm.github.com/todos/ .
 
 Derived from code by Yehuda Katz and Tom Dale.
 
