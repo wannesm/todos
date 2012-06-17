@@ -1,124 +1,173 @@
 Todos = SC.Application.create({
-  ready: function(){
-    this._super();
-    this.fetchTodos();
-  },
+	ready: function() {
+		this._super();
 
-  fetchTodos: function(){
-    $.ajax('/todos.json', {
-      success: function(data){
-        Todos.todosController.beginPropertyChanges();
-        data.forEach(function(item){
-          item = item.todo;
-          var todo = Todos.Todo.create({
-            id: item.id,
-            title: item.title,
-            isDone: item.done
-          });
-          Todos.todosController.pushObject(todo);
-        });
-        Todos.todosController.endPropertyChanges();
-      },
-      error: function(response, status, error){
-        console.error(status, error, response.responseText);
-      }
-    });
-  }
+		// Predefined tags
+		//Todos.tagsController.createTag("winkel");
+		//Todos.tagsController.createTag("werk");
+		//Todos.tagsController.createTag("sport");
+
+		// Training
+		Todos.tagsController.learnFromTodo("Buy eggs #shop");
+		Todos.tagsController.learnFromTodo("Buy milk #shop");
+		Todos.tagsController.learnFromTodo("Buy bread #shop");
+		Todos.tagsController.learnFromTodo("Buy flower #shop");
+		Todos.tagsController.learnFromTodo("Write paper #work");
+		Todos.tagsController.learnFromTodo("Write proposal #work");
+		Todos.tagsController.learnFromTodo("Implement prototype #work");
+		Todos.tagsController.learnFromTodo("Meeting with prof Blockeel #work #urgent");
+		Todos.tagsController.learnFromTodo("Buy climbing card #sport");
+		Todos.tagsController.learnFromTodo("Agree on a day to go climbing #sport");
+	}
 });
 
 Todos.Todo = SC.Object.extend({
-  id: null,
   title: null,
-  isDone: false,
+  isDone: false
+});
 
-  attributes: function(){
-    return {
-      title: this.get('title'),
-      done: this.get('isDone')
-    };
-  }.property('title', 'isDone').cacheable(),
+Todos.Tag = SC.Object.extend({
+	name: null,
+	confidence: 0,
 
-  isNew: function(){
-    return !this.get('id');
-  }.property('id').cacheable(),
+	isRecommended: function() {
+		if (this.confidence > 0.8) return true;
+		else return false;
+	}.property('confidence')
+});
 
-  isDestroyed: false,
+Todos.tagsController = SC.ArrayProxy.create({
+	content: [],
+	todoString: null,
 
-  isSaving: false,
-  isDestroying: false,
+	createTag: function(name) {
+		if (this.content.filter( function(item) {if (item.name == name) return true;} ).length != 0) {
+			console.log("Tag "+name+" already exists")
+			return;
+		}
+		var tag = Todos.Tag.create({ name: name });
+		this.pushObject(tag)
+		this.sortConfidence()
+		//this.notifyPropertyChange('content')
+	},
 
-  hasQueuedSave: false,
-  hasQueuedDestroy: false,
+	learnFromTodo: function(todo) {
+		console.log("Learn from todo: "+todo)
+		words = todo.split(" ")
+		tags = []
+		for (var i=0; i<words.length; i++) {
+			word = words[i]
+			if (word[0] == "#") {
+				// it's a tag
+				tags.push(word.substr(1))
+			}
+		}
+		newtodo = todo.replace(/#[a-zA-Z]+/i, "")
+		for (var i=0; i<tags.length; i++) {
+			this.createTag(tags[i])
+			teachTodo(tags[i], newtodo)
+		}
+	},
 
-  save: function(){
-    if (this.get('isDestroying')) { return false; }
+	updateTagsConfidence: function() {
+		console.log("Update confidences")
 
-    if (this.get('isSaving')) {
-      this.set('hasQueuedSave', true);
-      return;
-    }
+		filteredTodoString = this.todoString.replace(/#[a-zA-Z]+/i, "")
+		//console.log("filtered todo = "+filteredTodoString)
+		tagsprobs = guessTags(filteredTodoString)
+		//console.log(tagsprobs);
+		thiscontent = this.content
 
-    this.set('isSaving', true);
-    this.set('hasQueuedSave', false);
+		this.content.forEach( function(ctag, index, self) {
+			tagsprob = tagsprobs.find( function(curtagsprob) {
+				return ctag.name == curtagsprob.tag
+			})
+			if (tagsprob == null) {
+				console.log("Tag not yet learned by naive bayes: "+ctag.name)
+			} else {
+				//console.log("Tag found: "+ctag.name+", old prob: "+ctag.confidence+", new prob: "+tagsprob.probability)
+				ctag.set('confidence', tagsprob.probability)
+			}
+		})
+		this.sortConfidence()
+		this.notifyPropertyChange("content");
 
-    var self = this,
-        url = this.get('isNew') ? '/todos.json' : '/todos/'+this.get('id')+'.json',
-        method = this.get('isNew') ? 'POST' : 'PUT';
+	}.observes("todoString"),
 
-    $.ajax(url, {
-      type: 'POST',
-      data: { todo: this.get('attributes'), _method: method },
-      dataType: 'text', // Sometimes we get an empty string that blows up as JSON
-      success: function(data, response) {
-        data = $.trim(data);
-        if (data) { data = JSON.parse(data); }
-        if (self.get('isNew')) { self.set('id', data['todo']['id']); }
-      },
-      error: function(response, status, error){
-        console.error(status, error, response.responseText);
-      },
-      complete: function(){
-        self.set('isSaving', false);
-        if (self.get('hasQueuedDestroy')) { self.destroy(); }
-        else if (self.get('hasQueuedSave')) { self.save(); }
-      }
-    });
-  },
+	// Example usage:
+	// Todos.tagsController.setTagConfidence("winkel",0.9)
+	setTagConfidence: function(name, conf) {
+		this.content.forEach( function(item, index, self) {
+			if (item.name == name) {
+				console.log("Updating "+name+" to confidence "+conf);
+				item.set('confidence', conf)
+			}
+		})
+		this.sortConfidence()
+		this.notifyPropertyChange("content");
+	},
 
-  destroy: function(){
-    if (this.get('isNew')) { this.set('isDestroyed', true); }
-    if (this.get('isDestroyed') || this.get('isDestroying')) { return; }
+	sortConfidence: function() {
+		this.content.sort(function(a,b) {
+			if (a.confidence == b.confidence) {
+				return a.name.localeCompare(b.name)
+			} else {
+				if (a.confidence < b.confidence) return 1
+				else return -1
+			}
+		});
+		//this.notifyPropertyChange("content");
+	},//.observes("@each.confidence"),
 
-    if (this.get('isSaving')) {
-      this.set('hasQueuedDestroy', true);
-      return;
-    }
+	print: function() {
+		this.content.forEach(function(item) {
+			console.log(item.name+" - "+item.confidence)
+		})
+	}
+});
 
-    this.set('isDestroying', true);
-    this.set('hasQueuedDestroy', false);
 
-    var self = this;
+Todos.tagsControllerFiltered = SC.ArrayProxy.create({
+	content: [],
 
-    $.ajax('/todos/'+this.get('id')+'.json', {
-      type: 'POST',
-      data: { _method: 'delete' },
-      dataType: 'text', // Sometimes we get an empty string that blows up as JSON
-      error: function(response, status, error){
-        console.error(status, error, response.responseText);
-      },
-      success: function(){
-        self.set('isDestroyed', true);
-      },
-      complete: function(){
-        self.set('isDestroying', false);
-      }
-    });
-  },
+	update: function() {
+		console.log("Update shown tags");
+		//this.content.forEach(function(item) {
+			//console.log(item.name +" "+item.confidence)
+		//})
+		if (Todos.tagsController.todoString == null || Todos.tagsController.todoString == "") {
+			this.set("content",[])
+		} else {
+			this.set("content",Todos.tagsController.filter(
+				function(item, index, self) {
+					if (Todos.tagsController.todoString != null && Todos.tagsController.todoString.search("#"+item.name) != -1) {
+						console.log("Not showing tag "+item.name)
+						return false
+					}
+					if(item.confidence < 0.0) { return false; }
+					return true;
+				}
+			))
+		}
+	}.observes("Todos.tagsController.content"),
 
-  autosave: function(){
-    this.save();
-  }.observes('attributes')
+	print: function() {
+		this.content.forEach(function(item) {
+			console.log(item.name+" - "+item.confidence)
+		})
+	}
+});
 
+
+Todos.tagsCollectionView = SC.CollectionView.extend({
+	itemViewClass: SC.View.extend({
+		mouseDown: function(evt) {
+			console.log("Clicked on tag: "+this.content.name);
+			oldval = $('#new-todo').val();
+			//console.log("Old input field value: "+oldval);
+			$('#new-todo').val(oldval+" #"+this.content.name)
+		}
+	})
 });
 
 Todos.todosController = SC.ArrayProxy.create({
@@ -127,15 +176,10 @@ Todos.todosController = SC.ArrayProxy.create({
   createTodo: function(title) {
     var todo = Todos.Todo.create({ title: title });
     this.pushObject(todo);
-    todo.save();
   },
 
   clearCompletedTodos: function() {
-    var self = this;
-    this.filterProperty('isDone', true).forEach(function(todo){
-      self.removeObject(todo);
-      todo.destroy();
-    });
+    this.filterProperty('isDone', true).forEach(this.removeObject, this);
   },
 
   remaining: function() {
@@ -164,11 +208,16 @@ Todos.StatsView = SC.View.extend({
 
 Todos.CreateTodoView = SC.TextField.extend({
   insertNewline: function() {
-    var value = this.get('value');
+	  console.log("Adding new todo")
+    //var value = this.get('value');
+	var value = Todos.tagsController.get("todoString")
 
     if (value) {
+		//Todos.tagsController.set("todoString", "")
+	  this.set('value', '');
       Todos.todosController.createTodo(value);
-      this.set('value', '');
+	  Todos.tagsController.learnFromTodo(value)
+	  console.log("Learned tags in todo")
     }
   }
 });
