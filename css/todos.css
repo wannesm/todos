@@ -239,3 +239,7 @@ body {
         text-decoration: line-through; }
     body ul li:nth-child(odd) {
       background-color: #F7F7F7; }
+
+#taglist .is-recommended {
+	color: green;
+}
